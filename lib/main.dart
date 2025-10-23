@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'splash_screen.dart';
 
+/// This is the main entry point of the Food Ordering App
+/// Edited by Mustafa Tahir for testing commit on GitHub
+
+
 void main() {
   runApp(const FoodOrderingApp());
 }
