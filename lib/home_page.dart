@@ -283,19 +283,23 @@ class FoodCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🖼️ Food Image
+          // 🖼️ Food Image (Fixed Size)
           ClipRRect(
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(15),
               topRight: Radius.circular(15),
             ),
-            child: Image.asset(
-              imagePath,
-              height: 120,
+            child: Container(
+              height: 140, // fixed height for all images
               width: double.infinity,
-              fit: BoxFit.cover,
+              color: Colors.grey[100], // light background
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.cover, // keeps aspect ratio, fills nicely
+              ),
             ),
           ),
+
 
           Padding(
             padding: const EdgeInsets.all(12),
