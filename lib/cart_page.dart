@@ -1,73 +1,14 @@
 import 'package:flutter/material.dart';
-
+import 'cart_manager.dart';
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
-
   @override
   State<CartPage> createState() => _CartPageState();
 }
-
 class _CartPageState extends State<CartPage> {
-  final List<Map<String, dynamic>> _cartItems = [
-    {
-      'name': 'Margherita Pizza',
-      'price': 12.99,
-      'quantity': 1,
-      'image': 'assets/pizza1.jpg',
-    },
-    {
-      'name': 'Classic Burger',
-      'price': 8.99,
-      'quantity': 2,
-      'image': 'assets/burger1.jpg',
-    },
-  ];
-
-  double get _totalPrice {
-    return _cartItems.fold(0, (total, item) {
-      return total + (item['price'] * item['quantity']);
-    });
-  }
-
-  void _placeOrder() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Order Confirmed!',
-          style: TextStyle(
-            color: Color(0xFFFF6B35),
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins',
-          ),
-        ),
-        content: const Text(
-          'Your order has been placed successfully. You will receive a confirmation soon.',
-          style: TextStyle(
-            fontFamily: 'Poppins',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'OK',
-              style: TextStyle(
-                color: Color(0xFFFF6B35),
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final cartItems = CartManager().cartItems;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -90,7 +31,7 @@ class _CartPageState extends State<CartPage> {
       body: Column(
         children: [
           Expanded(
-            child: _cartItems.isEmpty
+            child: cartItems.isEmpty
                 ? const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -114,23 +55,30 @@ class _CartPageState extends State<CartPage> {
             )
                 : ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: _cartItems.length,
+              itemCount: cartItems.length,
               itemBuilder: (context, index) {
-                final item = _cartItems[index];
+                final item = cartItems[index];
                 return CartItemCard(
                   name: item['name'],
                   price: item['price'],
                   quantity: item['quantity'],
                   onQuantityChanged: (newQuantity) {
                     setState(() {
-                      _cartItems[index]['quantity'] = newQuantity;
+                      item['quantity'] = newQuantity;
+                    });
+                  },
+                  onRemove: () {
+                    setState(() {
+                      CartManager().cartItems.removeAt(index);
                     });
                   },
                 );
               },
             ),
           ),
-          if (_cartItems.isNotEmpty)
+
+          // Total and place order
+          if (cartItems.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -161,7 +109,7 @@ class _CartPageState extends State<CartPage> {
                         ),
                       ),
                       Text(
-                        '\$$_totalPrice',
+                        '\$${CartManager().totalPrice.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -172,11 +120,14 @@ class _CartPageState extends State<CartPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
+
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: _placeOrder,
+                      onPressed: () {
+                        _placeOrder();
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFF6B35),
                         shape: RoundedRectangleBorder(
@@ -202,13 +153,53 @@ class _CartPageState extends State<CartPage> {
       ),
     );
   }
+
+  void _placeOrder() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Order Confirmed!',
+          style: TextStyle(
+            color: Color(0xFFFF6B35),
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        content: const Text(
+          'Your order has been placed successfully.',
+          style: TextStyle(fontFamily: 'Poppins'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                color: Color(0xFFFF6B35),
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+// ----------------------------------------------------
+// CART ITEM CARD — WITH REMOVE BUTTON
+// ----------------------------------------------------
 
 class CartItemCard extends StatelessWidget {
   final String name;
   final double price;
   final int quantity;
   final Function(int) onQuantityChanged;
+  final VoidCallback onRemove;
 
   const CartItemCard({
     super.key,
@@ -216,6 +207,7 @@ class CartItemCard extends StatelessWidget {
     required this.price,
     required this.quantity,
     required this.onQuantityChanged,
+    required this.onRemove,
   });
 
   @override
@@ -229,7 +221,6 @@ class CartItemCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // Food Image Placeholder
             Container(
               width: 60,
               height: 60,
@@ -237,12 +228,13 @@ class CartItemCard extends StatelessWidget {
                 color: const Color(0xFFFFF3E0),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.fastfood,
-                color: Colors.orange[300],
+                color: Color(0xFFFF6B35),
               ),
             ),
             const SizedBox(width: 16),
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,6 +260,14 @@ class CartItemCard extends StatelessWidget {
                 ],
               ),
             ),
+
+            // REMOVE BUTTON
+            IconButton(
+              onPressed: onRemove,
+              icon: const Icon(Icons.delete, color: Colors.red),
+            ),
+
+            // Quantity
             Row(
               children: [
                 IconButton(
