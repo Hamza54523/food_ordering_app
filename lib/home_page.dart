@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'cart_page.dart';
-import 'cart_manager.dart';
-class HomePage extends StatefulWidget
 
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
 
 class _HomePageState extends State<HomePage> {
   final List<Map<String, dynamic>> _categories = [
@@ -10,7 +14,6 @@ class _HomePageState extends State<HomePage> {
     {'name': 'Burgers', 'icon': Icons.fastfood},
     {'name': 'Drinks', 'icon': Icons.local_drink},
     {'name': 'Desserts', 'icon': Icons.icecream},
-    {'name': 'Deals', 'icon': Icons.local_offer},
   ];
 
   final List<Map<String, dynamic>> _foodItems = [
@@ -54,82 +57,20 @@ class _HomePageState extends State<HomePage> {
       'name': 'Orange Juice',
       'price': 3.99,
       'category': 'Drinks',
-      'image': 'assets/Orange Juice.jpg',
-    },
-    {
-      'id': 7,
-      'name': 'Chocolate Cake',
-      'price': 6.99,
-      'category': 'Desserts',
-      'image': 'assets/chocolate_cake.jpg',
-    },
-    {
-      'id': 8,
-      'name': 'Vanilla Ice Cream',
-      'price': 3.49,
-      'category': 'Desserts',
-      'image': 'assets/vanilla_ice_cream.jpg',
-    },
-    {
-      'id': 9,
-      'name': 'Brownie Sundae',
-      'price': 5.99,
-      'category': 'Desserts',
-      'image': 'assets/brownie_sundae.jpg',
-    },
-    {
-      'id': 100,
-      'name': 'Deal 1: Pizza + Drink',
-      'price': 16.99,
-      'category': 'Deals',
-      'image': 'assets/deal1.jpg',
-    },
-    {
-      'id': 101,
-      'name': 'Deal 2: Burger + Fries',
-      'price': 12.49,
-      'category': 'Deals',
-      'image': 'assets/deal2.jpg',
-    },
-    {
-      'id': 102,
-      'name': 'Deal 3: 2 Burgers + Drink',
-      'price': 18.99,
-      'category': 'Deals',
-      'image': 'assets/deal3.jpg',
-    },
-    {
-      'id': 103,
-      'name': 'Deal 4: Pizza + Wings',
-      'price': 22.99,
-      'category': 'Deals',
-      'image': 'assets/deal4.jpg',
-    },
-    {
-      'id': 104,
-      'name': 'Deal 5: Full Family Meal',
-      'price': 29.99,
-      'category': 'Deals',
-      'image': 'assets/deal5.jpg',
+      'image': 'assets/orange Juice.jpg',
     },
   ];
 
   String _selectedCategory = 'Pizza';
   int _cartItemCount = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _cartItemCount = CartManager().itemCount;
-  }
-
-  void _addToCart(Map<String, dynamic> item) {
-    CartManager().addItem(item);
-    setState(() => _cartItemCount = CartManager().itemCount);
-
+  void _addToCart() {
+    setState(() {
+      _cartItemCount++;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("Item added to cart!"),
+        content: Text('Item added to cart!'),
         backgroundColor: Color(0xFFFF6B35),
       ),
     );
@@ -159,15 +100,13 @@ class _HomePageState extends State<HomePage> {
           Stack(
             children: [
               IconButton(
-                onPressed: () async {
-                  await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const CartPage()));
-                  setState(() => _cartItemCount = CartManager().itemCount);
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CartPage()),
+                  );
                 },
-                icon: const Icon(Icons.shopping_cart,
-                    color: Color(0xFFFF6B35)),
+                icon: const Icon(Icons.shopping_cart, color: Color(0xFFFF6B35)),
               ),
               if (_cartItemCount > 0)
                 Positioned(
@@ -176,14 +115,21 @@ class _HomePageState extends State<HomePage> {
                   child: Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10)),
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
                     child: Text(
                       _cartItemCount.toString(),
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
@@ -191,121 +137,125 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-
-      // BODY
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search for food...',
-                    hintStyle: TextStyle(color: Colors.grey),
-                    border: InputBorder.none,
-                    prefixIcon:
-                    Icon(Icons.search, color: Color(0xFFFF6B35)),
-                  ),
-                ),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 🔍 Search Bar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(15),
               ),
-
-              const SizedBox(height: 24),
-              const Text(
-                'Categories',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins'),
-              ),
-              const SizedBox(height: 16),
-
-              SizedBox(
-                height: 80,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final category = _categories[index];
-                    return GestureDetector(
-                      onTap: () => setState(() {
-                        _selectedCategory = category['name'];
-                      }),
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: _selectedCategory == category['name']
-                              ? const Color(0xFFFF6B35)
-                              : Colors.grey[50],
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(category['icon'],
-                                color:
-                                _selectedCategory == category['name']
-                                    ? Colors.white
-                                    : const Color(0xFFFF6B35)),
-                            const SizedBox(height: 4),
-                            Text(
-                              category['name'],
-                              style: TextStyle(
-                                color:
-                                _selectedCategory == category['name']
-                                    ? Colors.white
-                                    : Colors.black87,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+              child: TextField(
+                decoration: const InputDecoration(
+                  hintText: 'Search for food...',
+                  hintStyle: TextStyle(color: Colors.grey),
+                  border: InputBorder.none,
+                  prefixIcon: Icon(Icons.search, color: Color(0xFFFF6B35)),
                 ),
               ),
+            ),
+            const SizedBox(height: 24),
 
-              const SizedBox(height: 24),
-              Text(
-                _selectedCategory == "Deals"
-                    ? "Special Deals"
-                    : "Popular Items",
-                style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins'),
+            // 🍽️ Categories
+            const Text(
+              'Categories',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+                fontFamily: 'Poppins',
               ),
-              const SizedBox(height: 16),
-
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.78,
-                ),
-                itemCount: filteredItems.length,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 80,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _categories.length,
                 itemBuilder: (context, index) {
-                  final food = filteredItems[index];
-                  return FoodCard(
-                    name: food['name'],
-                    price: food['price'],
-                    imagePath: food['image'],
-                    onAddToCart: () => _addToCart(food),
+                  final category = _categories[index];
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedCategory = category['name'];
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _selectedCategory == category['name']
+                            ? const Color(0xFFFF6B35)
+                            : Colors.grey[50],
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            category['icon'],
+                            color: _selectedCategory == category['name']
+                                ? Colors.white
+                                : const Color(0xFFFF6B35),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            category['name'],
+                            style: TextStyle(
+                              color: _selectedCategory == category['name']
+                                  ? Colors.white
+                                  : Colors.black87,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
-            ]),
+            ),
+            const SizedBox(height: 24),
+
+            // 🍕 Food Items
+            const Text(
+              'Popular Items',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.8,
+              ),
+              itemCount: filteredItems.length,
+              itemBuilder: (context, index) {
+                final food = filteredItems[index];
+                return FoodCard(
+                  name: food['name'],
+                  price: food['price'],
+                  imagePath: food['image'],
+                  onAddToCart: _addToCart,
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -328,78 +278,80 @@ class FoodCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
-      shadowColor: Colors.black12,
-      shape:
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // IMAGE FIXED + NO BLANK SPACE
+          // 🖼️ Food Image (Fixed Size)
           ClipRRect(
             borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(18),
-                topRight: Radius.circular(18)),
+              topLeft: Radius.circular(15),
+              topRight: Radius.circular(15),
+            ),
             child: Container(
-              height: 135,
+              height: 140, // fixed height for all images
               width: double.infinity,
-              color: Colors.white,
+              color: Colors.grey[100], // light background
               child: Image.asset(
                 imagePath,
-                fit: BoxFit.contain,
+                fit: BoxFit.cover, // keeps aspect ratio, fills nicely
               ),
             ),
           ),
+
+
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: "Poppins"),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "\$$price",
-                    style: const TextStyle(
-                        fontSize: 17,
-                        color: Color(0xFFFF6B35),
-                        fontWeight: FontWeight.bold,
-                        fontFamily: "Poppins"),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '\$$price',
+                  style: const TextStyle(
+                    color: Color(0xFFFF6B35),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    fontFamily: 'Poppins',
                   ),
-                  const SizedBox(height: 10),
-
-                  // PERFECT BUTTON
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: onAddToCart,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6B35),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onAddToCart,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6B35),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Text(
-                        "Add to Cart",
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: "Poppins"),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    child: const Text(
+                      'Add to Cart',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
                       ),
                     ),
-                  )
-                ]),
-          )
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
