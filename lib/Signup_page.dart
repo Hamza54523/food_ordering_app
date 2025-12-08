@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'login_page.dart';
+import '../services/auth_service.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -10,70 +11,72 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  final emailController = TextEditingController();
-  final passController = TextEditingController();
-  final confirmPassController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
-  bool loading = false;
-
-  Future<void> signUp() async {
-    String email = emailController.text.trim();
-    String pass = passController.text.trim();
-    String confirm = confirmPassController.text.trim();
-
-    if (email.isEmpty || pass.isEmpty || confirm.isEmpty) {
-      showSnackBar("Please fill all fields", isError: true);
-      return;
-    }
-
-    if (pass != confirm) {
-      showSnackBar("Passwords do not match", isError: true);
-      return;
-    }
-
-    setState(() => loading = true);
-
-    try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: pass,
-      );
-
-      showSnackBar("Account created successfully!", isError: false);
-
-      // Navigate to LoginPage after short delay
-      Future.delayed(const Duration(seconds: 2), () {
-        if (!mounted) return;
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const LoginPage()));
-      });
-    } on FirebaseAuthException catch (e) {
-      String message;
-      switch (e.code) {
-        case 'email-already-in-use':
-          message = 'This email is already in use.';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address.';
-          break;
-        case 'weak-password':
-          message = 'Password is too weak.';
-          break;
-        default:
-          message = e.message ?? 'Firebase Auth Error';
-      }
-      showSnackBar(message, isError: true);
-    } catch (e) {
-      showSnackBar("Something went wrong. Try again.", isError: true);
-    }
-
-    setState(() => loading = false);
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 
-  void showSnackBar(String msg, {bool isError = true}) {
+  Future<void> _signup() async {
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      _showSnackBar('Please fill all fields');
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showSnackBar('Passwords do not match');
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      _showSnackBar('Password must be at least 6 characters');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = await authService.registerWithEmail(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+      _nameController.text.trim(),
+    );
+
+    setState(() => _isLoading = false);
+
+    if (user != null && mounted) {
+      _showSnackBar('Account created successfully!', isError: false);
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        }
+      });
+    } else if (mounted) {
+      _showSnackBar('Failed to create account');
+    }
+  }
+
+  void _showSnackBar(String message, {bool isError = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg),
+        content: Text(message),
         backgroundColor: isError ? Colors.red : Colors.green,
       ),
     );
@@ -82,6 +85,7 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text("Create Account"),
         backgroundColor: const Color(0xFFFF6B35),
@@ -99,56 +103,82 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
             const SizedBox(height: 25),
-
-            // Email
             TextField(
-              controller: emailController,
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: "Full Name",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person),
+              ),
+            ),
+            const SizedBox(height: 15),
+            TextField(
+              controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               decoration: const InputDecoration(
                 labelText: "Email",
                 border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.email),
               ),
             ),
             const SizedBox(height: 15),
-
-            // Password
             TextField(
-              controller: passController,
-              obscureText: true,
-              decoration: const InputDecoration(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              decoration: InputDecoration(
                 labelText: "Password",
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.lock),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscurePassword
+                      ? Icons.visibility
+                      : Icons.visibility_off),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 15),
-
-            // Confirm Password
             TextField(
-              controller: confirmPassController,
-              obscureText: true,
-              decoration: const InputDecoration(
+              controller: _confirmPasswordController,
+              obscureText: _obscureConfirmPassword,
+              decoration: InputDecoration(
                 labelText: "Confirm Password",
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.lock),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscureConfirmPassword
+                      ? Icons.visibility
+                      : Icons.visibility_off),
+                  onPressed: () {
+                    setState(() {
+                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                    });
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 25),
-
-            // Signup Button
             SizedBox(
               width: double.infinity,
               height: 50,
-              child: ElevatedButton(
-                onPressed: loading ? null : signUp,
+              child: _isLoading
+                  ? const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFFFF6B35),
+                ),
+              )
+                  : ElevatedButton(
+                onPressed: _signup,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFF6B35),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                child: loading
-                    ? const CircularProgressIndicator(
-                  color: Colors.white,
-                )
-                    : const Text(
+                child: const Text(
                   "Create Account",
                   style: TextStyle(
                     color: Colors.white,
@@ -159,8 +189,6 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
             const SizedBox(height: 15),
-
-            // Navigate to Login
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -175,8 +203,7 @@ class _SignupPageState extends State<SignupPage> {
                   child: const Text(
                     "Login",
                     style: TextStyle(
-                        color: Color(0xFFFF6B35),
-                        fontWeight: FontWeight.bold),
+                        color: Color(0xFFFF6B35), fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
